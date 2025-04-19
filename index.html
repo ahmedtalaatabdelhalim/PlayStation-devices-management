@@ -55,6 +55,7 @@
     price: null,
     orders: [] // ✅ إضافة مصفوفة الطلبات هنا
 }));
+      let currentDeviceId = null;
 
       const alertSounds = [
     "https://k.top4top.io/m_3373pafzk1.mp3",
@@ -171,7 +172,13 @@ function deleteLogEntry(index) {
                     <div style="text-align:right; margin-top:10px;">
                         <p>📋 الطلبات:</p>
                         <ul style="list-style:none; padding:0;">
-                            ${device.orders.map(o => `<li>• ${o.name} × ${o.quantity} = ${o.total} جنيه</li>`).join('')}
+                            ${device.orders.map((o, index) => `
+  <li>
+    • ${o.name} × ${o.quantity} = ${o.total} جنيه
+    <button onclick="deleteOrder(${device.id}, ${index})" style="margin-right: 10px; background-color: red; color: white; border: none; padding: 2px 6px; border-radius: 4px; cursor: pointer;">🗑️</button>
+  </li>
+`).join('')}
+
                         </ul>
                         <p>💰 إجمالي الطلبات: ${device.orders.reduce((sum, order) => sum + order.total, 0)} جنيه</p>
                     </div>
@@ -191,14 +198,21 @@ function deleteLogEntry(index) {
 
             <!-- زر إضافة الوقت يظهر فقط إذا كان الجهاز مشغولًا -->
             ${device.status === 'مشغول' ? `<button class="add-time" onclick="addTime(${device.id})">إضافة وقت</button>` : ''}
-            ${(device.status === 'مشغول' || device.status === 'منتهي') && device.orders && device.orders.length > 0 ? `
-                <div style="text-align:right; margin-top:10px;">
-                    <p>📋 الطلبات:</p>
-                    <ul style="list-style:none; padding:0;">
-                        ${device.orders.map(o => `<li>• ${o.name} × ${o.quantity} = ${o.total} جنيه</li>`).join('')}
-                    </ul>
-                </div>
-            ` : ''}
+            ${device.status === 'مشغول'
+ && device.orders && device.orders.length > 0 ? `
+    <div style="text-align:right; margin-top:10px;">
+        <p>📋 الطلبات:</p>
+        <ul style="list-style:none; padding:0;">
+            ${device.orders.map((o, index) => `
+                <li>
+                    • ${o.name} × ${o.quantity} = ${o.total} جنيه
+                    <button onclick="deleteOrder(${device.id}, ${index})" style="margin-right: 10px; background-color: red; color: white; border: none; padding: 2px 6px; border-radius: 4px; cursor: pointer;">🗑️</button>
+                </li>
+            `).join('')}
+        </ul>
+    </div>
+` : ''}
+
 
             ${device.status === 'مشغول' ? `<button style="background-color:black; color:white; margin-top:5px;" onclick="addOrder(${device.id})">إضافة طلب</button>` : ''}
         `;
@@ -248,6 +262,18 @@ if (isNaN(duration) || duration <= 0) {
 
     updateDevices();
 }
+      
+ function deleteOrder(deviceId, orderIndex) {
+    if (!confirm("هل تريد حذف هذا الطلب؟")) return;
+
+    const device = devices.find(d => d.id === deviceId);
+    if (!device || !device.orders || orderIndex < 0 || orderIndex >= device.orders.length) return;
+
+    device.orders.splice(orderIndex, 1); // حذف الطلب
+    updateDevices(); // تحديث الواجهة
+}
+
+      
 
  function addTime(id) {
     let device = devices.find(d => d.id === id);  // العثور على الجهاز المعني
@@ -272,73 +298,25 @@ if (isNaN(duration) || duration <= 0) {
 }
 
   function addOrder(deviceId) {
-    const device = devices.find(d => d.id === deviceId);
-    if (!device) return;
-
-    // الطلبات الجاهزة
-    const predefinedOrders = {
-        "بيبسي": 20,
-        "استينج كبير": 20,
-        "استينج صغير": 15,
-        "تويست": 20,
-        "فولت": 15,
-        "شيبسي كبير": 10,
-        "شيبسي صغير": 5,
-        "كراتيه كبير": 10,
-        "كاراتيه صغير": 5,
-        "بسكوت او نايتي كبير": 10,
-        "بسكوت او نايتي صغير": 5,
-        "اندومي كبير": 20,
-        "اندومي وسط": 15,
-        "اندومي صغير": 10,
-        "كافي ميكس": 20,
-        "قهوه": 20,
-        "شاي": 10,
-        "يانسون": 10
-    };
-
-    let options = Object.entries(predefinedOrders).map(([name, price], index) => `${index + 1} - ${name} (${price} جنيه)`).join('\n');
-    let choice = prompt(`اختر رقم الطلب من القائمة أو اكتب الاسم يدويًا:\n${options}\n\nأو اكتب اسم الطلب الجديد:`);
-
-    let name, price;
-    if (!choice) return;
-
-    // محاولة تحديد ما إذا كان المستخدم اختار رقمًا من القائمة
-    let index = parseInt(choice) - 1;
-    let predefinedKeys = Object.keys(predefinedOrders);
-    if (!isNaN(index) && predefinedKeys[index]) {
-        name = predefinedKeys[index];
-        price = predefinedOrders[name];
-    } else {
-        // تم إدخال اسم جديد يدويًا
-        name = choice;
-        price = parseFloat(prompt(`أدخل سعر "${name}" بالجنيه:`));
-        if (isNaN(price) || price <= 0) {
-            alert("❌ السعر غير صالح.");
-            return;
-        }
-    }
-
-    let quantity = parseInt(prompt(`أدخل الكمية لـ "${name}":`));
-    if (isNaN(quantity) || quantity <= 0) {
-        alert("❌ الكمية غير صالحة.");
-        return;
-    }
-
-    let total = price * quantity;
-    device.orders.push({ name, price, quantity, total });
-
-    updateDevices();
+    currentDeviceId = deviceId;
+    document.getElementById("orderModal").style.display = "block";
 }
+
+
+
 
 function fillOrderFields() {
-  const selected = document.getElementById("predefinedItems").value;
+  const selected = document.getElementById("orderItemSelect").value;
   if (selected) {
     const [name, price] = selected.split(',');
-    document.getElementById("orderName").value = name;
-    document.getElementById("orderPrice").value = price;
+    document.getElementById("orderItemName").value = name;
+    document.getElementById("orderItemPrice").value = price;
   }
 }
+
+
+
+
 
 
  function togglePause(id) {
@@ -387,7 +365,38 @@ function fillOrderFields() {
 
 
 
+function submitOrder() {
+  const name = document.getElementById("orderItemName").value.trim();
+  const price = parseFloat(document.getElementById("orderItemPrice").value);
+  const quantity = parseInt(document.getElementById("orderItemQty").value);
 
+  console.log({ name, price, quantity });
+
+  if (!name || isNaN(price) || price <= 0 || isNaN(quantity) || quantity <= 0) {
+    alert("❌ يرجى إدخال بيانات صحيحة لكل الحقول.");
+    return;
+  }
+
+  const total = price * quantity;
+  const device = devices.find(d => d.id === currentDeviceId);
+  if (!device) return;
+
+  device.orders.push({ name, price, quantity, total });
+
+  document.getElementById("orderItemName").value = '';
+  document.getElementById("orderItemPrice").value = '';
+  document.getElementById("orderItemQty").value = 1;
+  document.getElementById("orderItemSelect").value = '';
+
+  closeOrderModal();
+  updateDevices();
+}
+
+
+ 
+        function closeOrderModal() {
+    document.getElementById("orderModal").style.display = "none";
+}
 
 
         function resetDevice(id) {
@@ -467,6 +476,17 @@ function fillOrderFields() {
 
         setInterval(updateDevices, 1000);
     </script>
+<a href="index.html" 
+   style="position: fixed; bottom: 120px; right: 20px; background-color: #003366; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; text-decoration: none;">
+  🔄 تحديث الصفحة
+</a>
+
+  <!-- زر 📝 تسجيل يدوي -->
+<a href="https://ahmedtalaatabdelhalim.github.io/-/" target="_blank"
+   style="position: fixed; bottom: 70px; right: 20px; background-color: #6f42c1; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; text-decoration: none; display: inline-block; text-align: center;">
+  📝 تسجيل يدوي
+</a>
+
   <button id="showLogBtn" onclick="toggleLog()" style="position: fixed; bottom: 20px; right: 20px; background-color: #17a2b8; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">
     📜 سجل اللعب
 </button>
@@ -601,17 +621,14 @@ function deleteLogEntry(index) {
 }
 
 </script>
-      <div id="orderModal" style="display: none; position: fixed; top: 30%; left: 30%; background-color: white; padding: 20px; border: 2px solid black; z-index: 1000;">
-  <h3>إضافة طلب</h3>
-  
-  <label>اختر الطلب:</label>
-  <select id="predefinedItems" onchange="fillOrderFields()">
-    <option value="">-- اختر من القائمة --</option>
-    <option value="بيبسي,20">بيبسي - 20 جنيه</option>
-    <option value="شيبسي صغير,5">شيبسي صغير - 5 جنيه</option>
-    <option value="اندومي كبير,20">اندومي كبير - 20 جنيه</option>
-    <option value="شاي,10">شاي - 10 جنيه</option>
-  </select>
+<select id="predefinedItems" onchange="fillOrderFields()">
+  <option value="">-- اختر من القائمة --</option>
+  <option value="بيبسي,20">بيبسي - 20 جنيه</option>
+  <option value="شيبسي صغير,5">شيبسي صغير - 5 جنيه</option>
+  <option value="اندومي كبير,20">اندومي كبير - 20 جنيه</option>
+  <option value="شاي,10">شاي - 10 جنيه</option>
+</select>
+
   
   <br><br>
 
@@ -633,6 +650,40 @@ function deleteLogEntry(index) {
   <button onclick="submitOrder()">إضافة</button>
   <button onclick="closeOrderModal()">إلغاء</button>
 </div>
+ <!-- ✅ نافذة إضافة الطلب بعد تعديل الأسماء لتكون فريدة -->
+<div id="orderModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: white; color: black; padding: 20px; border: 2px solid black; z-index: 1000; border-radius: 10px;">
+  <h3>إضافة طلب</h3>
+
+  <label>اختر الطلب:</label>
+  <select id="orderItemSelect" onchange="fillOrderFields()">
+    <option value="">-- اختر من القائمة --</option>
+    <option value="بيبسي,20">بيبسي - 20 جنيه</option>
+    <option value="شيبسي صغير,5">شيبسي صغير - 5 جنيه</option>
+    <option value="اندومي كبير,20">اندومي كبير - 20 جنيه</option>
+    <option value="شاي,10">شاي - 10 جنيه</option>
+  </select>
+
+  <br><br>
+
+  <label>اسم الطلب:</label>
+  <input type="text" id="orderItemName" placeholder="اكتب اسم الطلب">
+
+  <br><br>
+
+  <label>السعر:</label>
+  <input type="number" id="orderItemPrice" placeholder="اكتب السعر">
+
+  <br><br>
+
+  <label>العدد:</label>
+  <input type="number" id="orderItemQty" placeholder="اكتب العدد" value="1">
+
+  <br><br>
+
+  <button onclick="submitOrder()">✅ إضافة</button>
+  <button onclick="closeOrderModal()">❌ إلغاء</button>
+</div>
+
 
 
 </body>
