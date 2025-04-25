@@ -363,11 +363,12 @@ function fillOrderFields() {
 
 
 
-
 function submitOrder() {
   const name = document.getElementById("orderItemName").value.trim();
   const price = parseFloat(document.getElementById("orderItemPrice").value);
   const quantity = parseInt(document.getElementById("orderItemQty").value);
+
+  console.log({ name, price, quantity });
 
   if (!name || isNaN(price) || price <= 0 || isNaN(quantity) || quantity <= 0) {
     alert("❌ يرجى إدخال بيانات صحيحة لكل الحقول.");
@@ -386,12 +387,8 @@ function submitOrder() {
   document.getElementById("orderItemSelect").value = '';
 
   closeOrderModal();
-  
-  localStorage.setItem("devices", JSON.stringify(devices));
-  saveDevicesToFirebase(devices);
   updateDevices();
 }
-
 
 
  
@@ -646,6 +643,9 @@ function deleteLogEntry(index) {
  <button onclick="closeOrderModal()">❌ إلغاء</button></div>
 </body>
   <!-- تكامل Firebase: أضف هذا الكود في نهاية الملف مباشرة قبل </body> -->
+
+
+
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
   import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-database.js";
@@ -664,12 +664,10 @@ function deleteLogEntry(index) {
   const app = initializeApp(firebaseConfig);
   const database = getDatabase(app);
 
-  // دالة حفظ البيانات إلى Firebase
   function saveDevicesToFirebase(devices) {
     set(ref(database, 'devices'), devices);
   }
 
-  // دالة تحميل البيانات من Firebase
   function loadDevicesFromFirebase() {
     const devicesRef = ref(database, 'devices');
     onValue(devicesRef, (snapshot) => {
@@ -682,18 +680,43 @@ function deleteLogEntry(index) {
     });
   }
 
-  // تشغيل الدالة لتحميل البيانات عند فتح الصفحة
   window.onload = loadDevicesFromFirebase;
 
-  // تعديل updateDevices لتشمل حفظ البيانات
   const originalUpdateDevices = updateDevices;
   window.updateDevices = function() {
     originalUpdateDevices();
     saveDevicesToFirebase(devices);
   };
 
-  // ربط زر "إضافة" الطلبات بالدالة submitOrder
-  
+  function submitOrder() {
+    const name = document.getElementById("orderItemName").value.trim();
+    const price = parseFloat(document.getElementById("orderItemPrice").value);
+    const quantity = parseInt(document.getElementById("orderItemQty").value);
+
+    if (!name || isNaN(price) || price <= 0 || isNaN(quantity) || quantity <= 0) {
+      alert("❌ يرجى إدخال بيانات صحيحة لكل الحقول.");
+      return;
+    }
+
+    const total = price * quantity;
+    const device = devices.find(d => d.id === currentDeviceId);
+    if (!device) return;
+
+    if (!device.orders) device.orders = [];
+    device.orders.push({ name, price, quantity, total });
+
+    document.getElementById("orderItemName").value = '';
+    document.getElementById("orderItemPrice").value = '';
+    document.getElementById("orderItemQty").value = 1;
+    document.getElementById("orderItemSelect").value = '';
+
+    closeOrderModal();
+    updateDevices(); // يحفظ التغييرات في Firebase أيضًا
+  }
+
+  window.submitOrder = submitOrder;
+  window.closeOrderModal = closeOrderModal;
+  window.addOrder = addOrder;
 </script>
 
 </html>
