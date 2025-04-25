@@ -39,12 +39,10 @@
     </style>
 </head>
 <body>
-  <div id="notifications-container" style="position: fixed; bottom: 10px; left: 10px; z-index: 1000;"></div>
-
-    <h1>إدارة أجهزة البلايستيشن</h1>
-    <div id="devices" class="container"></div>
-
-    <script>
+<div id="notifications-container" style="position: fixed; bottom: 10px; left: 10px; z-index: 1000;"></div>
+<h1>إدارة أجهزة البلايستيشن</h1>
+<div id="devices" class="container"></div>
+<script>
        let devices = JSON.parse(localStorage.getItem('devices')) || Array.from({ length: 6 }, (_, i) => ({
     id: i + 1,
     status: 'متاح',
@@ -163,7 +161,7 @@ function deleteLogEntry(index) {
             <p>نوع اللعب: ${device.mode ? (device.mode === 'multi' ? 'مالتي' : device.mode === 'single' ? 'فردي' : 'وقت مفتوح') : 'غير محدد'}</p>
             ${device.startTime ? `<p>وقت البداية: ${new Date(device.startTime).toLocaleTimeString('ar-EG')}</p>` : ''}
             ${device.endTime ? `<p>وقت النهاية: ${new Date(device.endTime).toLocaleTimeString('ar-EG')}</p>` : ''}
-            ${device.remainingTime !== null && device.status === 'مشغول' ? `<p>الوقت المتبقي: ${Math.floor(device.remainingTime / 3600)} ساعة و ${Math.floor((device.remainingTime % 3600) / 60)} دقيقة و ${device.remainingTime % 60} ثانية</p>` : ''}
+            ${device.remainingTime !== null && device.status === 'مشغول' && device.endTime ? `<p>الوقت المتبقي: ${Math.floor(device.remainingTime / 3600)} ساعة و ${Math.floor((device.remainingTime % 3600) / 60)} دقيقة و ${device.remainingTime % 60} ثانية</p>` : ''}
             ${device.status === 'متوقف' ? `<p>اللعبة متوقفة مؤقتًا</p>` : ''}
             ${device.status === 'منتهي' ? `
                 <p>⏳ مدة اللعب: ${device.duration} دقيقة</p>
@@ -365,12 +363,11 @@ function fillOrderFields() {
 
 
 
+
 function submitOrder() {
   const name = document.getElementById("orderItemName").value.trim();
   const price = parseFloat(document.getElementById("orderItemPrice").value);
   const quantity = parseInt(document.getElementById("orderItemQty").value);
-
-  console.log({ name, price, quantity });
 
   if (!name || isNaN(price) || price <= 0 || isNaN(quantity) || quantity <= 0) {
     alert("❌ يرجى إدخال بيانات صحيحة لكل الحقول.");
@@ -389,8 +386,12 @@ function submitOrder() {
   document.getElementById("orderItemSelect").value = '';
 
   closeOrderModal();
+  
+  localStorage.setItem("devices", JSON.stringify(devices));
+  saveDevicesToFirebase(devices);
   updateDevices();
 }
+
 
 
  
@@ -476,62 +477,43 @@ function submitOrder() {
 
         setInterval(updateDevices, 1000);
     </script>
-<a href="index.html" 
-   style="position: fixed; bottom: 120px; right: 20px; background-color: #003366; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; text-decoration: none;">
-  🔄 تحديث الصفحة
-</a>
-
-  <!-- زر 📝 تسجيل يدوي -->
-<a href="go:1"
-   style="position: fixed; bottom: 70px; right: 20px; background-color: #6f42c1; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; text-decoration: none; display: inline-block; text-align: center;">
-  📝 تسجيل يدوي
-</a>
-
-  <button id="showLogBtn" onclick="toggleLog()" style="position: fixed; bottom: 20px; right: 20px; background-color: #17a2b8; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">
-    📜 سجل اللعب
-</button>
-  <div id="logContainer" style="display: none; position: fixed; bottom: 50px; right: 20px; background: rgba(0, 0, 0, 0.8); padding: 20px; border-radius: 10px; width: 90%; max-width: 600px; max-height: 400px; overflow-y: auto;">
-    <h2>سجل اللعب</h2>
-    <table border="1" width="100%" style="border-collapse: collapse; color: white; text-align: center;">
-        <thead>
-            <tr>
-                <th>رقم الجهاز</th>
-                <th>مدة اللعب</th>
-                <th>وقت البداية</th>
-                <th>وقت النهاية</th>
-                <th>السعر</th>
-                <th>نوع اللعب</th>
-                <th>حذف</th>
-            </tr>
-        </thead>
-        <tbody id="logTable"></tbody>
-    </table>
-    <p><strong>إجمالي الأرباح: </strong><span id="totalEarnings">0</span> جنيه</p>
-    <button onclick="deleteLog()" style="background-color: red; color: white; padding: 10px; border-radius: 5px; border: none; cursor: pointer;">🗑️ حذف السجل</button>
-    <button onclick="toggleLog()" style="background-color: gray; color: white; padding: 10px; border-radius: 5px; border: none; cursor: pointer;">❌ إغلاق</button>
-</div>
-  <button id="showLogBtn" onclick="toggleLog()" style="position: fixed; bottom: 20px; right: 20px; background-color: #17a2b8; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">📜 سجل اللعب</button>
-
+<a href="index.html" style="position: fixed; bottom: 180px; right: 20px; background-color: #003366; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; text-decoration: none;"> 🔄 تحديث الصفحة </a> <a href="https://ahmedtalaatabdelhalim.github.io/-/" target="_blank" style="position: fixed; bottom: 120px; right: 20px; background-color: #6f42c1; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; text-decoration: none; display: inline-block; text-align: center;" rel="noopener"> 📝 تسجيل يدوي </a> <button id="showLogBtn" onclick="toggleLog()" style="position: fixed; bottom: 60px; right: 20px; background-color: #17a2b8; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;"> 📜 سجل اللعب </button>
 <div id="logContainer" style="display: none; position: fixed; bottom: 50px; right: 20px; background: rgba(0, 0, 0, 0.8); padding: 20px; border-radius: 10px; width: 90%; max-width: 600px; max-height: 400px; overflow-y: auto;">
-    <h2>سجل اللعب</h2>
-    <table border="1" width="100%" style="border-collapse: collapse; color: white; text-align: center;">
-        <thead>
-            <tr>
-                <th>رقم الجهاز</th>
-                <th>مدة اللعب</th>
-                <th>وقت البداية</th>
-                <th>وقت النهاية</th>
-                <th>السعر</th>
-                <th>نوع اللعب</th>
-                <th>حذف</th>
-            </tr>
-        </thead>
-        <tbody id="logTable"></tbody>
-    </table>
-    <p><strong>إجمالي الأرباح:
-      
-
-      <script>
+<h2>سجل اللعب</h2>
+<table border="1" width="100%" style="border-collapse: collapse; color: white; text-align: center;">
+<thead>
+<tr>
+<th>رقم الجهاز</th>
+<th>مدة اللعب</th>
+<th>وقت البداية</th>
+<th>وقت النهاية</th>
+<th>السعر</th>
+<th>نوع اللعب</th>
+<th>حذف</th>
+</tr>
+</thead>
+<tbody id="logTable"></tbody>
+</table>
+<p><strong>إجمالي الأرباح: </strong><span id="totalEarnings">0</span> جنيه</p>
+<button onclick="deleteLog()" style="background-color: red; color: white; padding: 10px; border-radius: 5px; border: none; cursor: pointer;">🗑️ حذف السجل</button> <button onclick="toggleLog()" style="background-color: gray; color: white; padding: 10px; border-radius: 5px; border: none; cursor: pointer;">❌ إغلاق</button></div>
+<div id="logContainer" style="display: none; position: fixed; bottom: 50px; right: 20px; background: rgba(0, 0, 0, 0.8); padding: 20px; border-radius: 10px; width: 90%; max-width: 600px; max-height: 400px; overflow-y: auto;">
+<h2>سجل اللعب</h2>
+<table border="1" width="100%" style="border-collapse: collapse; color: white; text-align: center;">
+<thead>
+<tr>
+<th>رقم الجهاز</th>
+<th>مدة اللعب</th>
+<th>وقت البداية</th>
+<th>وقت النهاية</th>
+<th>السعر</th>
+<th>نوع اللعب</th>
+<th>حذف</th>
+</tr>
+</thead>
+<tbody id="logTable"></tbody>
+</table>
+<p><strong>إجمالي الأرباح:
+<script>
 let gameLog = JSON.parse(localStorage.getItem("gameLog")) || [];
 
 function toggleLog() {
@@ -621,70 +603,97 @@ function deleteLogEntry(index) {
 }
 
 </script>
-<select id="predefinedItems" onchange="fillOrderFields()">
-  <option value="">-- اختر من القائمة --</option>
-  <option value="بيبسي,20">بيبسي - 20 جنيه</option>
-  <option value="شيبسي صغير,5">شيبسي صغير - 5 جنيه</option>
-  <option value="اندومي كبير,20">اندومي كبير - 20 جنيه</option>
-  <option value="شاي,10">شاي - 10 جنيه</option>
-</select>
-
-  
-  <br><br>
-
-  <label>اسم الطلب:</label>
-  <input type="text" id="orderName" placeholder="اكتب اسم الطلب">
-  
-  <br><br>
-
-  <label>السعر:</label>
-  <input type="number" id="orderPrice" placeholder="اكتب السعر">
-
-  <br><br>
-
-  <label>العدد:</label>
-  <input type="number" id="orderQuantity" placeholder="اكتب العدد" value="1">
-
-  <br><br>
-
-  <button onclick="submitOrder()">إضافة</button>
-  <button onclick="closeOrderModal()">إلغاء</button>
+  <select id="predefinedItems" onchange="fillOrderFields()">
+<option value="">-- اختر من القائمة --</option>
+<option value="بيبسي,20">بيبسي - 20 جنيه</option>
+<option value="شيبسي صغير,5">شيبسي صغير - 5 جنيه</option>
+<option value="اندومي كبير,20">اندومي كبير - 20 جنيه</option>
+<option value="شاي,10">شاي - 10 جنيه</option>
+</select><br /><br /><label>اسم الطلب:</label> <input type="text" id="orderName" placeholder="اكتب اسم الطلب" /> <br /><br /><label>السعر:</label> <input type="number" id="orderPrice" placeholder="اكتب السعر" /> <br /><br /><label>العدد:</label> <input type="number" id="orderQuantity" placeholder="اكتب العدد" value="1" /> <br /><br /><button onclick="submitOrder()">إضافة</button> <button onclick="closeOrderModal()">إلغاء</button> </strong></p>
 </div>
- <!-- ✅ نافذة إضافة الطلب بعد تعديل الأسماء لتكون فريدة -->
+
+<!-- ✅ نافذة إضافة الطلب بعد تعديل الأسماء لتكون فريدة -->
 <div id="orderModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: white; color: black; padding: 20px; border: 2px solid black; z-index: 1000; border-radius: 10px;">
-  <h3>إضافة طلب</h3>
-
-  <label>اختر الطلب:</label>
-  <select id="orderItemSelect" onchange="fillOrderFields()">
-    <option value="">-- اختر من القائمة --</option>
-    <option value="بيبسي,20">بيبسي - 20 جنيه</option>
-    <option value="شيبسي صغير,5">شيبسي صغير - 5 جنيه</option>
-    <option value="اندومي كبير,20">اندومي كبير - 20 جنيه</option>
-    <option value="شاي,10">شاي - 10 جنيه</option>
-  </select>
-
-  <br><br>
-
-  <label>اسم الطلب:</label>
-  <input type="text" id="orderItemName" placeholder="اكتب اسم الطلب">
-
-  <br><br>
-
-  <label>السعر:</label>
-  <input type="number" id="orderItemPrice" placeholder="اكتب السعر">
-
-  <br><br>
-
-  <label>العدد:</label>
-  <input type="number" id="orderItemQty" placeholder="اكتب العدد" value="1">
-
-  <br><br>
-
-  <button onclick="submitOrder()">✅ إضافة</button>
-  <button onclick="closeOrderModal()">❌ إلغاء</button>
-</div>
-
-
-
+<h3>إضافة طلب</h3>
+<select id="orderItemSelect" onchange="fillOrderFields()">
+<option value="">-- اختر من القائمة --</option>
+<option value="كنز,20">كنز - 20 جنيه</option>
+<option value="تويست,20">تويست - 20 جنيه</option>
+<option value="فيوري,20">فيوري - 20 جنيه</option>
+<option value="فولت,15">فولت - 15 جنيه</option>
+<option value="عصير سانتوب,15">عصير سانتوب - 15 جنيه</option>
+<option value="استنج زجاج,15">استنج زجاج - 15 جنيه</option>
+<option value="استنج بلاستيك,10">استنج بلاستيك - 10 جنيه</option>
+<option value="عصير دومتي,10">عصير دومتي - 10 جنيه</option>
+<option value="شيبسي كبير,10">شيبسي كبير - 10 جنيه</option>
+<option value="شيبسي صغير,5">شيبسي صغير - 5 جنيه</option>
+<option value="كاراتيه كبير,10">كاراتيه كبير - 10 جنيه</option>
+<option value="كاراتيه صغير,5">كاراتيه صغير - 5 جنيه</option>
+<option value="بسكوت او نايتي كبير,10">بسكوت او نايتي كبير - 10 جنيه</option>
+<option value="بسكوت او نايتي صغير,5">بسكوت او نايتي صغير - 5 جنيه</option>
+<option value="مولتو جامبو,20">مولتو جامبو - 20 جنيه</option>
+<option value="مولتو وسط,15">مولتو وسط - 15 جنيه</option>
+<option value="مولتو صغير,10">مولتو صغير - 10 جنيه</option>
+<option value="اندومي كبير,20">اندومي كبير - 20 جنيه</option>
+<option value="اندومي وسط,15">اندومي وسط - 15 جنيه</option>
+<option value="اندومي صغير,10">اندومي صغير - 10 جنيه</option>
+<option value="كوب قهوه,20">كوب قهوه - 20 جنيه</option>
+<option value="كوب كافي ماكس,20">كوب كافي ماكس - 20 جنيه</option>
+<option value="كوب شاي,10">كوب شاي - 10 جنيه</option>
+<option value="كوب يانسون,10">كوب يانسون - 10 جنيه</option>
+<option value="كوب نعناع,10">كوب نعناع - 10 جنيه</option>
+</select><br /><br /><label>اسم الطلب:</label> <input type="text" id="orderItemName" placeholder="اكتب اسم الطلب" /> <br /><br /><label>السعر:</label> <input type="number" id="orderItemPrice" placeholder="اكتب السعر" /> <br /><br /><label>العدد:</label> <input type="number" id="orderItemQty" placeholder="اكتب العدد" value="1" /> <br /><br /><button onclick="submitOrder()">✅ إضافة</button>
+ <button onclick="closeOrderModal()">❌ إلغاء</button></div>
 </body>
+  <!-- تكامل Firebase: أضف هذا الكود في نهاية الملف مباشرة قبل </body> -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+  import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyB-V4wfOFAdslSj8pe0shtYx7I8W9CA-oM",
+    authDomain: "ps4-manager-31b11.firebaseapp.com",
+    databaseURL: "https://ps4-manager-31b11-default-rtdb.firebaseio.com",
+    projectId: "ps4-manager-31b11",
+    storageBucket: "ps4-manager-31b11.firebasestorage.app",
+    messagingSenderId: "677331962224",
+    appId: "1:677331962224:web:d168c795b26bda8614e7b5",
+    measurementId: "G-YCP27E9WVL"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const database = getDatabase(app);
+
+  // دالة حفظ البيانات إلى Firebase
+  function saveDevicesToFirebase(devices) {
+    set(ref(database, 'devices'), devices);
+  }
+
+  // دالة تحميل البيانات من Firebase
+  function loadDevicesFromFirebase() {
+    const devicesRef = ref(database, 'devices');
+    onValue(devicesRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        devices = data;
+        localStorage.setItem("devices", JSON.stringify(devices)); 
+        updateDevices();
+      }
+    });
+  }
+
+  // تشغيل الدالة لتحميل البيانات عند فتح الصفحة
+  window.onload = loadDevicesFromFirebase;
+
+  // تعديل updateDevices لتشمل حفظ البيانات
+  const originalUpdateDevices = updateDevices;
+  window.updateDevices = function() {
+    originalUpdateDevices();
+    saveDevicesToFirebase(devices);
+  };
+
+  // ربط زر "إضافة" الطلبات بالدالة submitOrder
+  
+</script>
+
 </html>
