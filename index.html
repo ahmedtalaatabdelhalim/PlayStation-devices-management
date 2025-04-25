@@ -668,17 +668,20 @@ function deleteLogEntry(index) {
     set(ref(database, 'devices'), devices);
   }
 
-  function loadDevicesFromFirebase() {
-    const devicesRef = ref(database, 'devices');
-    onValue(devicesRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        devices = data;
-        localStorage.setItem("devices", JSON.stringify(devices)); 
-        updateDevices();
-      }
-    });
-  }
+import { get } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-database.js";
+
+function loadDevicesFromFirebase() {
+  const devicesRef = ref(database, 'devices');
+  get(devicesRef).then((snapshot) => {
+    const data = snapshot.val();
+    if (data) {
+      devices = data;
+      localStorage.setItem("devices", JSON.stringify(devices)); 
+      updateDevices();
+    }
+  });
+}
+
 
   window.onload = loadDevicesFromFirebase;
 
@@ -712,6 +715,8 @@ function deleteLogEntry(index) {
 
     closeOrderModal();
     updateDevices(); // يحفظ التغييرات في Firebase أيضًا
+    setTimeout(loadDevicesFromFirebase, 500);
+
   }
 
   window.submitOrder = submitOrder;
