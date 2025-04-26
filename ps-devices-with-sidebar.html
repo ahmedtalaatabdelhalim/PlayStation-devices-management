@@ -1,199 +1,100 @@
-
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <title>إدارة أجهزة البلايستيشن - الطلبات</title>
-    <style>
-        body {
-            font-family: Arial;
-            background-color: #222;
-            color: white;
-            margin: 0;
-            padding: 0;
-        }
-        .device {
-            width: 250px;
-            padding: 15px;
-            margin: 15px;
-            border-radius: 10px;
-            background-color: #333;
-            border: 2px solid #555;
-        }
-        .container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            margin-right: 250px;
-            padding-top: 70px;
-        }
-        .product-item {
-            background: white;
-            color: black;
-            margin-bottom: 10px;
-            padding: 8px;
-            border: 1px solid #aaa;
-            cursor: grab;
-        }
-        .device-orders {
-            background: #111;
-            padding: 10px;
-            margin-top: 10px;
-            border-radius: 5px;
-        }
-        .final-invoice {
-            background: #007bff;
-            color: white;
-            padding: 10px;
-            margin-top: 10px;
-            border-radius: 10px;
-        }
-        #productSidebar {
-            position: fixed;
-            top: 0;
-            left: -250px;
-            width: 250px;
-            height: 100%;
-            background: #f1f1f1;
-            color: black;
-            padding: 10px;
-            transition: 0.3s;
-            overflow-y: auto;
-            z-index: 1000;
-        }
-        #productSidebar.open {
-            left: 0;
-        }
-        button.toggle-btn {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            z-index: 1100;
-            background-color: #28a745;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>تسجيل دخول الشيفت</title>
+  <style>
+    body {
+      background-color: #f0f2f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      font-family: 'Cairo', sans-serif;
+    }
+    .login-container {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+      text-align: center;
+      width: 320px;
+    }
+    .login-container img {
+      width: 80px;
+      margin-bottom: 20px;
+    }
+    .login-container input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+    .login-container button {
+      width: 100%;
+      padding: 10px;
+      background-color: #007bff;
+      border: none;
+      color: white;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .login-container button:hover {
+      background-color: #0056b3;
+    }
+  </style>
 </head>
+
 <body>
 
-<button class="toggle-btn" onclick="toggleSidebar()">🛒 قائمة الطلبات</button>
-
-<div id="productSidebar">
-    <h3>الطلبات المتاحة</h3>
-    <div id="productList"></div>
-    <hr>
-    <input type="text" id="newProductName" placeholder="اسم الطلب" style="width:100%;">
-    <input type="number" id="newProductPrice" placeholder="السعر" style="width:100%; margin-top:5px;">
-    <button onclick="addNewProduct()" style="margin-top:5px;">➕ إضافة طلب</button>
+<div class="login-container">
+  <!-- ✨ هنا تضع شعارك بدال logo.png -->
+  <img src="logo.png" alt="شعار الشركة">
+  <h2>تسجيل دخول الشيفت</h2>
+  <input type="text" id="username" placeholder="ادخل اسم المستخدم">
+  <button onclick="login()">دخول</button>
 </div>
 
-<div class="container" id="devices"></div>
-
 <script>
-let products = JSON.parse(localStorage.getItem("shopProducts")) || [
-    { name: "بيبسي", price: 20 },
-    { name: "شيبسي", price: 10 },
-    { name: "شاي", price: 5 }
-];
+  const allowedUsers = ["ahmedtalaat", "mohmedtalaat", "ahmedFityan", "abuashraf"];
 
-let devices = Array.from({ length: 3 }, (_, i) => ({
-    id: i + 1,
-    orders: [],
-    price: 50 // مثال على سعر الجلسة
-}));
+  function login() {
+    const username = document.getElementById("username").value.trim();
 
-function toggleSidebar() {
-    const sidebar = document.getElementById("productSidebar");
-    sidebar.classList.toggle("open");
-}
-
-function renderProducts() {
-    const list = document.getElementById("productList");
-    list.innerHTML = "";
-    products.forEach(product => {
-        const item = document.createElement("div");
-        item.className = "product-item";
-        item.draggable = true;
-        item.textContent = `${product.name} - ${product.price} جنيه`;
-        item.dataset.name = product.name;
-        item.dataset.price = product.price;
-        item.addEventListener("dragstart", e => {
-            e.dataTransfer.setData("text/plain", JSON.stringify(product));
-        });
-        list.appendChild(item);
-    });
-}
-
-function addNewProduct() {
-    const name = document.getElementById("newProductName").value;
-    const price = parseFloat(document.getElementById("newProductPrice").value);
-    if (name && !isNaN(price)) {
-        products.push({ name, price });
-        localStorage.setItem("shopProducts", JSON.stringify(products));
-        renderProducts();
-        document.getElementById("newProductName").value = "";
-        document.getElementById("newProductPrice").value = "";
+    if (!allowedUsers.includes(username)) {
+      alert("⚠️ اسم المستخدم غير صحيح!");
+      return;
     }
-}
 
-function renderDevices() {
-    const container = document.getElementById("devices");
-    container.innerHTML = "";
-    devices.forEach(device => {
-        const div = document.createElement("div");
-        div.className = "device";
-        div.id = `device-${device.id}`;
-        div.setAttribute("ondrop", `handleDrop(event, 'device-${device.id}')`);
-        div.setAttribute("ondragover", "event.preventDefault()");
-        div.innerHTML = `
-            <h3>جهاز ${device.id}</h3>
-            <div class="device-orders"></div>
-            <div class="final-invoice"></div>
-        `;
-        container.appendChild(div);
-        renderDeviceOrders(device);
+    const now = new Date();
+    let today = new Date(now);
+    if (now.getHours() < 6) {
+      today.setDate(now.getDate() - 1);
+    }
+    const todayDate = today.toLocaleDateString("ar-EG", {
+      weekday: 'long', year: 'numeric', month: 'numeric', day: 'numeric'
     });
-}
 
-function handleDrop(event, elementId) {
-    event.preventDefault();
-    const product = JSON.parse(event.dataTransfer.getData("text/plain"));
-    const deviceId = parseInt(elementId.replace("device-", ""));
-    const device = devices.find(d => d.id === deviceId);
-    const existing = device.orders.find(o => o.name === product.name);
-    if (existing) {
-        existing.count += 1;
+    const shiftManagerToday = localStorage.getItem('shiftManagerDate');
+
+    if (shiftManagerToday === todayDate) {
+      // في مسؤول موجود ➔ تسجل كضيف
+      localStorage.setItem('shiftEmployee', username);
+      localStorage.setItem('userType', 'guest');
     } else {
-        device.orders.push({ ...product, count: 1 });
+      // مفيش مسؤول ➔ تسجل كمسؤول
+      localStorage.setItem('shiftEmployee', username);
+      localStorage.setItem('userType', 'manager');
+      localStorage.setItem('shiftManagerDate', todayDate);
     }
-    renderDeviceOrders(device);
-}
 
-function renderDeviceOrders(device) {
-    const element = document.getElementById(`device-${device.id}`);
-    const ordersDiv = element.querySelector(".device-orders");
-    const invoiceDiv = element.querySelector(".final-invoice");
-    let orderTotal = 0;
-    ordersDiv.innerHTML = "";
-    device.orders.forEach(order => {
-        orderTotal += order.count * order.price;
-        const item = document.createElement("div");
-        item.textContent = `${order.name} × ${order.count} = ${order.count * order.price}ج`;
-        ordersDiv.appendChild(item);
-    });
-    invoiceDiv.innerHTML = `
-        <strong>إجمالي الجلسة:</strong> ${device.price} جنيه<br>
-        <strong>الطلبات:</strong> ${orderTotal} جنيه<br>
-        <strong>المجموع:</strong> ${orderTotal + device.price} جنيه
-    `;
-}
-
-renderProducts();
-renderDevices();
+    // تحويل إلى النظام الرئيسي
+    window.location.href = "index.html";
+  }
 </script>
 
 </body>
